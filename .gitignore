@@ -18,3 +18,11 @@ yarn-error.log
 # OS
 .DS_Store
 Thumbs.db
+
+# RAG Data
+users.db
+chroma_db/
+uploaded_files/
+Backend/users.db
+Backend/chroma_db/
+Backend/uploaded_files/

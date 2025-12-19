@@ -1,103 +1,116 @@
-# RAG System Setup Guide
+# RAG System with Auth & Admin Roles
 
-Complete setup guide for the RAG system with Frontend (Next.js) and Backend (FastAPI).
+A complete RAG (Retrieval Augmented Generation) system featuring Authentication, User Roles (Admin/Student), and File Upload capabilities. Built with Next.js (Frontend) and FastAPI (Backend).
+
+## Features
+
+- **Authentication**: Secure Login and Registration system using JWT.
+- **User Roles**:
+    - **Admin**: Can upload PDF/Text files to the knowledge base.
+    - **Student**: Can chat with the AI about the uploaded knowledge.
+- **Persistent RAG**: Uses ChromaDB (saved to disk) to remember uploaded files across restarts.
+- **Modern UI**: Dark-themed, responsive chat interface.
 
 ## Architecture
 
-```
-Frontend (Next.js) → Backend (FastAPI) → RAG Pipeline → Vector DB
+```mermaid
+graph LR
+    User[Clients] --> Frontend[Next.js App]
+    Frontend --> Auth[Auth System]
+    Frontend --> Backend[FastAPI Server]
+    Backend --> DB[(SQLite Users DB)]
+    Backend --> VectorDB[(Chroma Vector DB)]
+    Backend --> LLM[OpenRouter/LLM]
 ```
 
 ## Prerequisites
 
 - Python 3.8+
 - Node.js 18+
-- npm or yarn
 
-## Backend Setup
+## Setup Guide
 
-1. Navigate to the Backend directory:
+### 1. Backend Setup
+
+Navigate to the Backend directory:
 ```bash
 cd Backend
 ```
 
-2. Create a virtual environment (if not already created):
+Create and activate virtual environment:
 ```bash
-python -m venv venv
-# On Windows
-venv\Scripts\activate
-# On Linux/Mac
-source venv/bin/activate
+python -m venv env
+# Windows
+.\env\Scripts\activate
+# Mac/Linux
+source env/bin/activate
 ```
 
-3. Install dependencies:
+Install dependencies:
 ```bash
 pip install -r requirements.txt
+# Verify bcrypt compatibility
+pip install "bcrypt<4.0.0"
 ```
 
-4. Create a `.env` file in the Backend directory:
+Create a `.env` file in the `Backend` directory:
 ```env
 OPENROUTER_API_KEY=your_api_key_here
-LANGCHAIN_API_KEY=your_langchain_key_here  # Optional
+SECRET_KEY=your_super_secret_jwt_key
 ```
 
-5. Run the backend server:
+Run the server:
 ```bash
 uvicorn app:app --reload --port 8000
 ```
+*Server runs at `http://localhost:8000`*
 
-The backend will be available at `http://localhost:8000`
+### 2. Frontend Setup
 
-## Frontend Setup
-
-1. Navigate to the Frontend directory:
+Navigate to the Frontend directory:
 ```bash
-cd Frontend
+cd frontend
 ```
 
-2. Install dependencies:
+Install dependencies:
 ```bash
 npm install
-# or
-yarn install
 ```
 
-3. Create a `.env.local` file:
+Create a `.env.local` file:
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 ```
 
-4. Run the development server:
+Run the development server:
 ```bash
 npm run dev
-# or
-yarn dev
 ```
+*App runs at `http://localhost:3000`*
 
-The frontend will be available at `http://localhost:3000`
+## How to Use
 
-## Usage
-
-1. Start the backend server first (port 8000)
-2. Start the frontend server (port 3000)
-3. Open `http://localhost:3000` in your browser
-4. Upload a PDF file (currently the backend needs to be updated to handle file uploads)
-5. Ask questions about the uploaded document
+1.  **Register**: Go to `http://localhost:3000/register`.
+    *   Create an **Admin** account (select role: Admin).
+    *   Create a **Student** account.
+2.  **Upload Knowledge (Admin)**:
+    *   Login as Admin.
+    *   Use the "Upload Knowledge" panel to upload PDF or Text files.
+3.  **Chat (Student/Admin)**:
+    *   Login.
+    *   Ask questions! The AI will answer based on the files you uploaded.
 
 ## API Endpoints
 
-### Backend (FastAPI)
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/register` | Create a new user | No |
+| `POST` | `/token` | Login (Returns JWT) | No |
+| `POST` | `/upload` | Upload & Index File | **Yes (Admin)** |
+| `POST` | `/ask` | Chat with RAG | **Yes** |
+| `GET` | `/users/me` | Get current user info | **Yes** |
 
-- `GET /` - Health check
-- `POST /ask` - Ask a question
-  ```json
-  {
-    "question": "Your question here"
-  }
-  ```
+## Troubleshooting
 
-## Notes
-
-- The backend currently uses a web loader for documents. You'll need to update `rag_pipeline.py` to handle PDF uploads.
-- CORS is configured to allow requests from `http://localhost:3000`
-- Make sure both servers are running before using the application
+**Error: `AttributeError: module 'bcrypt' has no attribute '__about__'`**
+*   **Fix**: Run `pip install "bcrypt<4.0.0"` in your backend environment. This is a known compatibility issue with `passlib`.
