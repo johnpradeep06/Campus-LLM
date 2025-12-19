@@ -1,3 +1,5 @@
+# Note the UI and features is still under update ⚠️ .  
+
 # RAG System with Auth & Admin Roles
 
 A complete RAG (Retrieval Augmented Generation) system featuring Authentication, User Roles (Admin/Student), and File Upload capabilities. Built with Next.js (Frontend) and FastAPI (Backend).
