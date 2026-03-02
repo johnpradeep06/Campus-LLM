@@ -6,3 +6,8 @@ langchain-openai
 chromadb
 bs4
 python-dotenv
+sqlalchemy
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
+pypdf

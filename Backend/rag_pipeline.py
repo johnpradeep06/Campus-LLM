@@ -117,20 +117,30 @@ def is_greeting(text: str) -> bool:
 prompt = PromptTemplate(
     input_variables=["context", "question"],
     template="""
-You must answer the question ONLY using the provided context.
+You are a helpful university campus assistant.
 
-If the answer is NOT present in the context,
-respond exactly with:
-"I don’t know based on the given context."
+You can:
+- Answer questions about university policies, academics, hostel, placements, events, etc.
+- Guide students using official university information.
+
+Rules:
+1. If the question is about your identity, capabilities, or what you can help with,
+   answer directly without using the context.
+2. For all university-related queries, answer ONLY using the provided context.
+3. If the university-related answer is NOT present in the context, respond exactly with:
+"Sorry, I don’t know based on the given context."
+4. Keep answers clear, simple, and student-friendly.
+5. Provide steps in bullet points when applicable.
+6. Do NOT add assumptions or external information.
 
 Context:
 {context}
 
-Question:
+Student Question:
 {question}
 
 Answer:
-""",
+"""
 )
 
 # =========================================================
@@ -141,6 +151,7 @@ llm = ChatOpenAI(
     api_key=OPENROUTER_API_KEY,
     base_url="https://openrouter.ai/api/v1",
     model="openai/gpt-oss-120b",
+    max_tokens=1000
 )
 
 # =========================================================
@@ -148,8 +159,7 @@ llm = ChatOpenAI(
 # =========================================================
 
 def rag_answer(question: str) -> str:
-    if is_greeting(question):
-        return "Hi! 👋 How can I help you today?"
+    
 
     context = retrieve_context(question)
 

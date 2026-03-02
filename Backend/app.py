@@ -7,7 +7,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
-from database import engine, Base, get_db, User
+from database import engine, Base, get_db, User, ChatSession, ChatMessage
+from datetime import datetime
 from auth import (
     get_password_hash,
     verify_password,
@@ -52,6 +53,21 @@ class Token(BaseModel):
 
 class QueryRequest(BaseModel):
     question: str
+
+class ChatMessageResponse(BaseModel):
+    id: int
+    role: str
+    content: str
+    created_at: datetime
+    
+    model_config = {"from_attributes": True}
+
+class ChatSessionResponse(BaseModel):
+    id: int
+    title: str
+    created_at: datetime
+    
+    model_config = {"from_attributes": True}
 
 # -------------------------
 # Auth Endpoints
@@ -126,16 +142,94 @@ def upload_file(
         
     return {"filename": file.filename, "status": "Uploaded and Indexed"}
 
+@app.get("/files")
+def list_files(current_user: User = Depends(get_current_admin_user)):
+    try:
+        files = []
+        if os.path.exists(UPLOAD_DIR):
+            for filename in os.listdir(UPLOAD_DIR):
+                filepath = os.path.join(UPLOAD_DIR, filename)
+                if os.path.isfile(filepath):
+                    files.append({
+                        "filename": filename,
+                        "size": os.path.getsize(filepath),
+                        "uploaded_at": datetime.fromtimestamp(os.path.getmtime(filepath)).isoformat()
+                    })
+        return files
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list files: {str(e)}")
+
 # -------------------------
 # RAG Endpoint
 # -------------------------
 
 @app.post("/ask")
-def ask_rag(
+def ask_rag_deprecated(
     query: QueryRequest,
     current_user: User = Depends(get_current_user)
 ):
     answer = rag_answer(query.question)
+    return {
+        "question": query.question,
+        "answer": answer,
+    }
+
+# -------------------------
+# Chat Session Endpoints
+# -------------------------
+
+@app.get("/sessions", response_model=list[ChatSessionResponse])
+def get_sessions(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    sessions = db.query(ChatSession).filter(ChatSession.user_id == current_user.id).order_by(ChatSession.created_at.desc()).all()
+    return sessions
+
+@app.post("/sessions", response_model=ChatSessionResponse)
+def create_session(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    new_session = ChatSession(user_id=current_user.id, title="New Chat")
+    db.add(new_session)
+    db.commit()
+    db.refresh(new_session)
+    return new_session
+
+@app.get("/sessions/{session_id}/messages", response_model=list[ChatMessageResponse])
+def get_session_messages(session_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == current_user.id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return session.messages
+
+@app.post("/sessions/{session_id}/ask")
+def ask_rag_session(
+    session_id: int,
+    query: QueryRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == current_user.id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    # Update title if it's "New Chat" and this is the first message
+    if session.title == "New Chat":
+        session.title = query.question[:30] + ("..." if len(query.question) > 30 else "")
+        db.commit()
+
+    # Save user message
+    user_msg = ChatMessage(session_id=session.id, role="user", content=query.question)
+    db.add(user_msg)
+    db.commit()
+
+    # Call RAG
+    try:
+        answer = rag_answer(query.question)
+    except Exception as e:
+        answer = f"Error generating response: {str(e)}"
+    
+    # Save assistant message
+    asst_msg = ChatMessage(session_id=session.id, role="assistant", content=answer)
+    db.add(asst_msg)
+    db.commit()
+
     return {
         "question": query.question,
         "answer": answer,

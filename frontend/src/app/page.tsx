@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ChatInterface from "../components/ChatInterface";
-import UploadComponent from "../components/Upload";
 
 export default function Home() {
     const router = useRouter();
@@ -17,7 +16,9 @@ export default function Home() {
         if (!token) {
             router.push('/login');
         } else {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setRole(storedRole);
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
         }
     }, [router]);
@@ -32,22 +33,25 @@ export default function Home() {
 
     return (
         <main className="h-screen w-full bg-[#212121] flex flex-col relative">
-            <div className="absolute top-4 right-4 z-50">
+            {/* Top Right Controls */}
+            <div className="absolute top-4 right-4 z-50 flex items-center gap-3">
+                {role === 'admin' && (
+                    <button
+                        onClick={() => router.push('/admin')}
+                        className="bg-white/10 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/20 transition-all border border-white/10"
+                    >
+                        Admin Dashboard
+                    </button>
+                )}
                 <button
                     onClick={handleLogout}
-                    className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                    className="bg-red-500/10 text-red-500 border border-red-500/20 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-500 hover:text-white transition-all"
                 >
                     Logout
                 </button>
             </div>
 
-            {role === 'admin' && (
-                <div className="bg-white p-4">
-                    <UploadComponent />
-                </div>
-            )}
-
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 w-full h-full">
                 <ChatInterface />
             </div>
         </main>

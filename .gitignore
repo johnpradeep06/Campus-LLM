@@ -7,10 +7,14 @@ venv/
 .env
 .env.local
 
-# Node.js
+# Node.js & Next.js
 node_modules/
 npm-debug.log
 yarn-error.log
+.next/
+out/
+build/
+.vercel/
 
 # VSCode
 .vscode/
