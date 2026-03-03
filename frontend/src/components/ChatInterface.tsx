@@ -31,12 +31,6 @@ export default function ChatInterface() {
     const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        if (window.innerWidth < 768) {
-            setSidebarOpen(false);
-        }
-    }, []);
-
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
@@ -77,9 +71,6 @@ export default function ChatInterface() {
             console.error("Failed to load session", error);
         } finally {
             setIsLoading(false);
-            if (window.innerWidth < 768) {
-                setSidebarOpen(false);
-            }
         }
     };
 
@@ -145,14 +136,6 @@ export default function ChatInterface() {
 
     return (
         <div className="flex h-full w-full bg-[#212121] text-gray-100 font-sans overflow-hidden">
-            {/* Mobile Overlay */}
-            {sidebarOpen && (
-                <div
-                    className="fixed inset-0 bg-black/60 z-30 md:hidden transition-opacity"
-                    onClick={() => setSidebarOpen(false)}
-                />
-            )}
-
             {/* Sidebar */}
             <div
                 className={cn(

@@ -29,10 +29,10 @@ export default function Home() {
         router.push('/login');
     };
 
-    if (loading) return <div className="h-screen bg-[#212121] text-white flex items-center justify-center">Loading...</div>;
+    if (loading) return <div className="h-[100dvh] bg-[#212121] text-white flex items-center justify-center">Loading...</div>;
 
     return (
-        <main className="h-screen w-full bg-[#212121] flex flex-col relative overflow-hidden">
+        <main className="h-[100dvh] w-full bg-[#212121] flex flex-col relative overflow-hidden">
             {/* Top Right Controls */}
             <div className="absolute top-4 right-4 z-20 flex items-center gap-3">
                 {role === 'admin' && (
