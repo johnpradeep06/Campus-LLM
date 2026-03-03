@@ -20,9 +20,8 @@ def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password):
-    # Bcrypt truncates silently in older versions but throws an error in passlib + newer python.
-    # Truncate manually to 72 bytes (bcrypt max size).
-    return pwd_context.hash(password[:72])
+    password_bytes = password.encode("utf-8")
+    return pwd_context.hash(password_bytes[:72])
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
