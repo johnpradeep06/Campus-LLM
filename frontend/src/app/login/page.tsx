@@ -21,7 +21,7 @@ export default function LoginPage() {
         formData.append('password', password);
 
         try {
-            const res = await fetch('http://localhost:8000/token', {
+            const res = await fetch('https://campus-llm-production.up.railway.app/token', {
                 method: 'POST',
                 body: formData,
             });
@@ -34,7 +34,7 @@ export default function LoginPage() {
             localStorage.setItem('token', data.access_token);
 
             // Fetch user role
-            const userRes = await fetch('http://localhost:8000/users/me', {
+            const userRes = await fetch('https://campus-llm-production.up.railway.app/users/me', {
                 headers: {
                     'Authorization': `Bearer ${data.access_token}`
                 }
@@ -62,7 +62,7 @@ export default function LoginPage() {
                         <Bot size={32} className="text-[#121212]" />
                     </div>
                     <h2 className="text-3xl font-bold text-white tracking-tight">Welcome back</h2>
-                    <p className="text-gray-400 mt-2 text-sm font-medium">Sign in to Chai AI to continue</p>
+                    <p className="text-gray-400 mt-2 text-sm font-medium">Sign in to Shadow AI to continue</p>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-6">

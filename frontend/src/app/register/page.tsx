@@ -18,7 +18,7 @@ export default function RegisterPage() {
         setIsLoading(true);
 
         try {
-            const res = await fetch('http://localhost:8000/register', {
+            const res = await fetch('https://campus-llm-production.up.railway.app/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -51,7 +51,7 @@ export default function RegisterPage() {
                         <Bot size={32} className="text-[#121212]" />
                     </div>
                     <h2 className="text-3xl font-bold text-white tracking-tight">Create an account</h2>
-                    <p className="text-gray-400 mt-2 text-sm font-medium">Join Chai AI and start building</p>
+                    <p className="text-gray-400 mt-2 text-sm font-medium">Join Shadow AI and start building</p>
                 </div>
 
                 <form onSubmit={handleRegister} className="space-y-6">

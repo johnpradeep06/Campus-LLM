@@ -56,7 +56,7 @@ export default function UploadComponent({ onUploadSuccess }: UploadProps = {}) {
         const token = localStorage.getItem('token');
 
         try {
-            const res = await fetch('http://localhost:8000/upload', {
+            const res = await fetch('https://campus-llm-production.up.railway.app/upload', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -158,7 +158,7 @@ export default function UploadComponent({ onUploadSuccess }: UploadProps = {}) {
                     </div>
                     <div>
                         <p className="text-green-100 font-medium text-sm">Successfully Indexed!</p>
-                        <p className="text-green-300/70 text-xs">The document is now active in Chai AI&apos;s memory.</p>
+                        <p className="text-green-300/70 text-xs">The document is now active in Shadow AI&apos;s memory.</p>
                     </div>
                 </div>
             )}

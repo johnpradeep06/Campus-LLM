@@ -19,7 +19,7 @@ export default function AdminPage() {
     const fetchFiles = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:8000/files', {
+            const res = await fetch('https://campus-llm-production.up.railway.app/files', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -71,7 +71,7 @@ export default function AdminPage() {
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Knowledge Base</h1>
-                        <p className="text-gray-400 text-sm">Upload, index, and manage documents to empower Chai AI&apos;s knowledge retrieval.</p>
+                        <p className="text-gray-400 text-sm">Upload, index, and manage documents to empower Shadow AI&apos;s knowledge retrieval.</p>
                     </div>
                 </div>
 

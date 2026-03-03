@@ -43,7 +43,7 @@ export default function ChatInterface() {
         try {
             const token = localStorage.getItem('token');
             if (!token) return;
-            const res = await fetch('http://localhost:8000/sessions', {
+            const res = await fetch('https://campus-llm-production.up.railway.app/sessions', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -60,7 +60,7 @@ export default function ChatInterface() {
         setIsLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`http://localhost:8000/sessions/${sessionId}/messages`, {
+            const res = await fetch(`https://campus-llm-production.up.railway.app/sessions/${sessionId}/messages`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -92,7 +92,7 @@ export default function ChatInterface() {
             let activeSessionId = currentSessionId;
 
             if (!activeSessionId) {
-                const createRes = await fetch('http://localhost:8000/sessions', {
+                const createRes = await fetch('https://campus-llm-production.up.railway.app/sessions', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -105,7 +105,7 @@ export default function ChatInterface() {
                 }
             }
 
-            const askRes = await fetch(`http://localhost:8000/sessions/${activeSessionId}/ask`, {
+            const askRes = await fetch(`https://campus-llm-production.up.railway.app/sessions/${activeSessionId}/ask`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -296,7 +296,7 @@ export default function ChatInterface() {
                                         handleSubmit();
                                     }
                                 }}
-                                placeholder="Message Chai AI..."
+                                placeholder="Message Shadow AI..."
                                 className="w-full bg-transparent text-white placeholder-gray-400/80 resize-none focus:outline-none max-h-[200px] min-h-[44px] py-3 px-4 text-[15px] custom-scrollbar"
                                 style={{ height: 'auto', minHeight: '44px' }}
                             />
@@ -312,7 +312,7 @@ export default function ChatInterface() {
                             </button>
                         </div>
                         <div className="text-center mt-3 text-xs text-gray-500 font-medium tracking-wide">
-                            Chai AI can make mistakes. Consider checking important information.
+                            Shadow AI can make mistakes. Consider checking important information.
                         </div>
                     </div>
                 </div>
