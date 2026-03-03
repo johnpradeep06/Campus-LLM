@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Menu, Plus, Bot, Loader2, MessageSquare } from "lucide-react";
+import { Send, Menu, Plus, Bot, Loader2, MessageSquare, X } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import ReactMarkdown from 'react-markdown';
@@ -30,6 +30,12 @@ export default function ChatInterface() {
     const [sessions, setSessions] = useState<ChatSession[]>([]);
     const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (window.innerWidth < 768) {
+            setSidebarOpen(false);
+        }
+    }, []);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -71,6 +77,9 @@ export default function ChatInterface() {
             console.error("Failed to load session", error);
         } finally {
             setIsLoading(false);
+            if (window.innerWidth < 768) {
+                setSidebarOpen(false);
+            }
         }
     };
 
@@ -136,6 +145,14 @@ export default function ChatInterface() {
 
     return (
         <div className="flex h-full w-full bg-[#212121] text-gray-100 font-sans overflow-hidden">
+            {/* Mobile Overlay */}
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/70 z-30 md:hidden transition-opacity"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
             <div
                 className={cn(
@@ -144,10 +161,18 @@ export default function ChatInterface() {
                 )}
             >
                 <div className="flex flex-col h-full p-3 w-[260px]">
+                    <div className="flex items-center justify-between mb-4 md:hidden text-gray-400 px-1 pt-1">
+                        <span className="font-semibold text-white">Menu</span>
+                        <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-white/10 rounded-md transition-colors" title="Close Sidebar">
+                            <X size={20} />
+                        </button>
+                    </div>
+
                     <button
                         onClick={() => {
                             setMessages([]);
                             setCurrentSessionId(null);
+                            if (window.innerWidth < 768) setSidebarOpen(false);
                         }}
                         className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors text-sm text-white border border-white/5 shadow-sm"
                     >
