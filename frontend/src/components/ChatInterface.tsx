@@ -214,7 +214,7 @@ export default function ChatInterface() {
                             <p className="text-gray-400 mt-2 text-sm">Ask any question or upload a document as an admin.</p>
                         </div>
                     ) : (
-                        <div className="flex flex-col w-full max-w-3xl pb-40 pt-4 px-4 md:px-0">
+                        <div className="flex flex-col w-full max-w-3xl pb-4 pt-4 px-4 md:px-0">
                             {messages.map((msg, idx) => (
                                 <div key={idx} className={cn("flex w-full mt-6 first:mt-0", msg.role === 'user' ? "justify-end" : "justify-start")}>
                                     {msg.role === 'user' ? (
@@ -284,7 +284,7 @@ export default function ChatInterface() {
                 </div>
 
                 {/* Input Area */}
-                <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-[#212121] via-[#212121] to-transparent pt-6 pb-6 px-4 md:px-0 flex justify-center z-20">
+                <div className="w-full bg-[#212121] pt-4 pb-6 px-4 md:px-0 flex justify-center z-20 shrink-0">
                     <div className="w-full max-w-3xl relative">
                         <div className="relative flex items-end w-full p-2 bg-[#2f2f2f] rounded-[26px] border border-white/5 shadow-[0_0_20px_rgba(0,0,0,0.15)] focus-within:bg-[#333333] focus-within:border-white/10 transition-colors">
                             <textarea

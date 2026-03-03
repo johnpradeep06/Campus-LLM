@@ -45,10 +45,10 @@ export default function AdminPage() {
         }
     }, [router]);
 
-    if (loading) return <div className="min-h-screen bg-[#121212] text-white flex items-center justify-center">Loading Admin...</div>;
+    if (loading) return <div className="min-h-[100dvh] bg-[#121212] text-white flex items-center justify-center">Loading Admin...</div>;
 
     return (
-        <main className="h-screen overflow-y-auto w-full bg-[#121212] flex flex-col items-center custom-scrollbar">
+        <main className="min-h-[100dvh] overflow-y-auto w-full bg-[#121212] flex flex-col items-center custom-scrollbar">
             {/* Navigation Bar */}
             <div className="w-full bg-[#1a1a1a] border-b border-white/5 p-4 flex items-center justify-between sticky top-0 z-50 shadow-md">
                 <div className="flex items-center gap-4 px-2 md:px-6">
