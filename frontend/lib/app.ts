@@ -7,7 +7,7 @@ export async function askRag(question: string) {
   }
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://campus-llm-production.up.railway.app'}/ask`,
+    `https://campus-llm-production.up.railway.app/ask`,
     {
       method: "POST",
       headers: headers,
