@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Menu, Plus, Bot, Loader2, MessageSquare, X } from "lucide-react";
+import { Send, Menu, Plus, Bot, Loader2, MessageSquare, X, Globe, Building, Calendar, GraduationCap, BookOpen, Briefcase } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import ReactMarkdown from 'react-markdown';
@@ -21,6 +21,14 @@ type ChatSession = {
     title: string;
     created_at: string;
 };
+
+const SUGGESTED_QUERIES = [
+    { text: "What is the hostel fee structure?", icon: Building, label: "Hostel fees" },
+    { text: "When does the next semester begin?", icon: Calendar, label: "Academic calendar" },
+    { text: "How do I register for courses?", icon: GraduationCap, label: "Course registration" },
+    { text: "What are the library timings?", icon: BookOpen, label: "Library hours" },
+    { text: "What is the placement record?", icon: Briefcase, label: "Placements" },
+];
 
 export default function ChatInterface() {
     const [messages, setMessages] = useState<Message[]>([]);
@@ -87,11 +95,12 @@ export default function ChatInterface() {
         fetchSessions();
     }, []);
 
-    const handleSubmit = async (e?: React.FormEvent) => {
+    const handleSubmit = async (e?: React.FormEvent, overrideInput?: string) => {
         e?.preventDefault();
-        if (!input.trim() || isLoading) return;
+        const textToSubmit = overrideInput !== undefined ? overrideInput : input;
+        if (!textToSubmit.trim() || isLoading) return;
 
-        const userMessage = input.trim();
+        const userMessage = textToSubmit.trim();
         setInput("");
         setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
         setIsLoading(true);
@@ -141,6 +150,92 @@ export default function ChatInterface() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const renderMessageContent = (content: string) => {
+        const sourcesMatch = content.match(/\*\*Sources:\*\*\s*\n([\s\S]+)/);
+        let mainContent = content;
+        const sources: { title: string, uri: string }[] = [];
+
+        if (sourcesMatch) {
+            mainContent = content.replace(sourcesMatch[0], '').trim();
+            const sourcesText = sourcesMatch[1];
+            const sourceRegex = /-\s+\[(.*?)\]\((.*?)\)/g;
+            let match;
+            while ((match = sourceRegex.exec(sourcesText)) !== null) {
+                sources.push({ title: match[1], uri: match[2] });
+            }
+        }
+
+        return (
+            <div className="flex flex-col w-full min-w-0">
+                <div className="flex-1 text-[15px] leading-relaxed break-words mt-1.5 md:mt-2 text-gray-200 space-y-4 w-full">
+                    <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                            ul: (props) => <ul className="list-disc pl-6 space-y-1 mb-4" {...props} />,
+                            ol: (props) => <ol className="list-decimal pl-6 space-y-1 mb-4" {...props} />,
+                            li: (props) => <li className="pl-1 marker:text-gray-500" {...props} />,
+                            h1: (props) => <h1 className="text-2xl font-bold mt-6 mb-3 text-white" {...props} />,
+                            h2: (props) => <h2 className="text-xl font-bold mt-5 mb-3 text-white pb-1 border-b border-white/10" {...props} />,
+                            h3: (props) => <h3 className="text-lg font-bold mt-4 mb-2 text-white" {...props} />,
+                            p: (props) => <p className="mb-4 last:mb-0 leading-relaxed" {...props} />,
+                            a: (props) => <a className="text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors" target="_blank" rel="noreferrer" {...props} />,
+                            code: ({ className, children, ...props }) => {
+                                const match = /language-(\w+)/.exec(className || '')
+                                return match ? (
+                                    <pre className="block bg-[#121212] p-4 rounded-xl text-sm font-mono my-4 overflow-x-auto border border-white/5 shadow-inner max-w-full">
+                                        <code className={cn("text-gray-300", className)} {...props as any}>
+                                            {children}
+                                        </code>
+                                    </pre>
+                                ) : (
+                                    <code className="bg-white/10 rounded-md px-1.5 py-0.5 text-[0.9em] font-mono text-purple-300" {...props as any}>
+                                        {children}
+                                    </code>
+                                )
+                            },
+                            strong: (props) => <strong className="font-semibold text-white" {...props} />,
+                            blockquote: (props) => <blockquote className="border-l-2 border-purple-500/50 pl-4 py-1 italic text-gray-400 my-4 bg-purple-500/5 rounded-r-lg" {...props} />,
+                            table: (props) => <div className="w-full overflow-x-auto my-4 max-w-full"><table className="w-full text-sm text-left border-collapse border border-white/10 rounded-lg overflow-hidden" {...props} /></div>,
+                            th: (props) => <th className="bg-[#2f2f2f] p-3 border-b border-white/10 font-semibold text-gray-200" {...props} />,
+                            td: (props) => <td className="p-3 border-b border-white/5 last:border-0" {...props} />,
+                        }}
+                    >
+                        {mainContent}
+                    </ReactMarkdown>
+                </div>
+
+                {sources.length > 0 && (
+                    <div className="w-full mt-5 border-t border-white/10 pt-4">
+                        <div className="text-xs font-semibold text-gray-400 mb-3 flex items-center gap-1.5 uppercase tracking-wider">
+                            <Globe size={13} className="text-gray-400" />
+                            Sources
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {sources.map((src, i) => (
+                                <a
+                                    key={i}
+                                    href={src.uri}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="group flex flex-col justify-center bg-[#1c1c1c] hover:bg-[#2a2a2a] border border-white/10 hover:border-white/20 rounded-xl px-3 py-2.5 transition-all text-left max-w-[180px] shadow-sm"
+                                >
+                                    <div className="flex items-center gap-2 mb-1 text-xs">
+                                        <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[9px] text-gray-300 font-medium shrink-0 group-hover:bg-white/20 transition-colors">
+                                            {i + 1}
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-200 truncate w-full flex-1">
+                                            {src.title}
+                                        </span>
+                                    </div>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
     };
 
     return (
@@ -229,16 +324,8 @@ export default function ChatInterface() {
                 </div>
 
                 {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar w-full flex flex-col items-center">
-                    {messages.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full w-full text-center px-4 max-w-2xl mt-[-10vh]">
-                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6 shadow-xl shadow-white/5 transition-transform hover:scale-105 duration-300">
-                                <Bot size={32} className="text-[#212121]" />
-                            </div>
-                            <h2 className="text-3xl font-semibold text-white mb-2 tracking-tight">How can I help you today?</h2>
-                            <p className="text-gray-400 mt-2 text-sm">Ask any question or upload a document as an admin.</p>
-                        </div>
-                    ) : (
+                {messages.length > 0 && (
+                    <div className="flex-1 overflow-y-auto custom-scrollbar w-full flex flex-col items-center">
                         <div className="flex flex-col w-full max-w-3xl pb-4 pt-4 px-4 md:px-0">
                             {messages.map((msg, idx) => (
                                 <div key={idx} className={cn("flex w-full mt-6 first:mt-0", msg.role === 'user' ? "justify-end" : "justify-start")}>
@@ -251,42 +338,7 @@ export default function ChatInterface() {
                                             <div className="w-8 h-8 md:w-9 md:h-9 bg-white rounded-full flex items-center justify-center text-[#212121] flex-shrink-0 mt-1 shadow-sm border border-white/10">
                                                 <Bot size={18} />
                                             </div>
-                                            <div className="flex-1 text-[15px] leading-relaxed break-words mt-1.5 md:mt-2 text-gray-200 space-y-4">
-                                                <ReactMarkdown
-                                                    remarkPlugins={[remarkGfm]}
-                                                    components={{
-                                                        ul: (props) => <ul className="list-disc pl-6 space-y-1 mb-4" {...props} />,
-                                                        ol: (props) => <ol className="list-decimal pl-6 space-y-1 mb-4" {...props} />,
-                                                        li: (props) => <li className="pl-1 marker:text-gray-500" {...props} />,
-                                                        h1: (props) => <h1 className="text-2xl font-bold mt-6 mb-3 text-white" {...props} />,
-                                                        h2: (props) => <h2 className="text-xl font-bold mt-5 mb-3 text-white pb-1 border-b border-white/10" {...props} />,
-                                                        h3: (props) => <h3 className="text-lg font-bold mt-4 mb-2 text-white" {...props} />,
-                                                        p: (props) => <p className="mb-4 last:mb-0 leading-relaxed" {...props} />,
-                                                        a: (props) => <a className="text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors" target="_blank" rel="noreferrer" {...props} />,
-                                                        code: ({ className, children, node, ...props }) => {
-                                                            const match = /language-(\w+)/.exec(className || '')
-                                                            return match ? (
-                                                                <pre className="block bg-[#121212] p-4 rounded-xl text-sm font-mono my-4 overflow-x-auto border border-white/5 shadow-inner">
-                                                                    <code className={cn("text-gray-300", className)} {...props}>
-                                                                        {children}
-                                                                    </code>
-                                                                </pre>
-                                                            ) : (
-                                                                <code className="bg-white/10 rounded-md px-1.5 py-0.5 text-[0.9em] font-mono text-purple-300" {...props}>
-                                                                    {children}
-                                                                </code>
-                                                            )
-                                                        },
-                                                        strong: (props) => <strong className="font-semibold text-white" {...props} />,
-                                                        blockquote: (props) => <blockquote className="border-l-2 border-purple-500/50 pl-4 py-1 italic text-gray-400 my-4 bg-purple-500/5 rounded-r-lg" {...props} />,
-                                                        table: (props) => <div className="w-full overflow-x-auto my-4"><table className="w-full text-sm text-left border-collapse border border-white/10 rounded-lg overflow-hidden" {...props} /></div>,
-                                                        th: (props) => <th className="bg-[#2f2f2f] p-3 border-b border-white/10 font-semibold text-gray-200" {...props} />,
-                                                        td: (props) => <td className="p-3 border-b border-white/5 last:border-0" {...props} />,
-                                                    }}
-                                                >
-                                                    {msg.content}
-                                                </ReactMarkdown>
-                                            </div>
+                                            {renderMessageContent(msg.content)}
                                         </div>
                                     )}
                                 </div>
@@ -305,13 +357,22 @@ export default function ChatInterface() {
                             )}
                             <div ref={messagesEndRef} className="h-4" />
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
 
                 {/* Input Area */}
-                <div className="w-full bg-[#212121] pt-4 pb-6 px-4 md:px-0 flex justify-center z-20 shrink-0">
-                    <div className="w-full max-w-3xl relative">
-                        <div className="relative flex items-end w-full p-2 bg-[#2f2f2f] rounded-[26px] border border-white/5 shadow-[0_0_20px_rgba(0,0,0,0.15)] focus-within:bg-[#333333] focus-within:border-white/10 transition-colors">
+                <div className={cn(
+                    "w-full px-4 md:px-0 flex flex-col items-center z-20 shrink-0 transition-all duration-500",
+                    messages.length === 0 ? "flex-1 justify-center mt-[-8vh]" : "bg-[#212121] pt-4 pb-6 justify-end"
+                )}>
+                    <div className="w-full max-w-3xl relative flex flex-col items-center">
+                        {messages.length === 0 && (
+                            <h2 className="text-3xl md:text-4xl font-medium text-white mb-8 tracking-tight text-center">
+                                How can I help you today?
+                            </h2>
+                        )}
+
+                        <div className="relative flex flex-col w-full bg-[#2a2a2a] rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.3)] focus-within:border-white/20 focus-within:bg-[#2f2f2f] transition-all duration-300">
                             <textarea
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
@@ -321,24 +382,51 @@ export default function ChatInterface() {
                                         handleSubmit();
                                     }
                                 }}
-                                placeholder="Message Shadow AI..."
-                                className="w-full bg-transparent text-white placeholder-gray-400/80 resize-none focus:outline-none max-h-[200px] min-h-[44px] py-3 px-4 text-[15px] custom-scrollbar"
-                                style={{ height: 'auto', minHeight: '44px' }}
+                                placeholder="Ask anything..."
+                                className="w-full bg-transparent text-white placeholder-gray-400 resize-none focus:outline-none min-h-[56px] py-4 px-5 text-[15px] custom-scrollbar"
+                                style={{ height: 'auto', minHeight: '56px' }}
+                                rows={1}
                             />
-                            <button
-                                onClick={() => handleSubmit()}
-                                disabled={!input.trim() || isLoading}
-                                className={cn(
-                                    "p-2 rounded-full mb-1 mr-1 transition-all flex items-center justify-center w-8 h-8 outline-none",
-                                    input.trim() && !isLoading ? "bg-white text-black hover:opacity-90 hover:scale-105 active:scale-95" : "bg-white/5 text-gray-500 cursor-not-allowed"
-                                )}
-                            >
-                                {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={15} className="ml-0.5" />}
-                            </button>
+                            <div className="flex items-center justify-between px-3 pb-3">
+                                <div className="flex items-center gap-2">
+                                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-gray-200 transition-colors text-xs font-medium">
+                                        <Bot size={14} />
+                                        Model
+                                    </button>
+                                </div>
+                                <button
+                                    onClick={() => handleSubmit()}
+                                    disabled={!input.trim() || isLoading}
+                                    className={cn(
+                                        "p-2 rounded-full transition-all flex items-center justify-center w-8 h-8 outline-none",
+                                        input.trim() && !isLoading ? "bg-white text-black shadow-md hover:scale-105" : "bg-white/5 text-gray-500 cursor-not-allowed"
+                                    )}
+                                >
+                                    {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={15} className="ml-0.5" />}
+                                </button>
+                            </div>
                         </div>
-                        <div className="text-center mt-3 text-xs text-gray-500 font-medium tracking-wide">
-                            Shadow AI can make mistakes. Consider checking important information.
-                        </div>
+
+                        {messages.length === 0 && (
+                            <div className="flex flex-wrap items-center justify-center gap-2.5 mt-6 w-full px-2">
+                                {SUGGESTED_QUERIES.map((query, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => handleSubmit(undefined, query.text)}
+                                        className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#1c1c1c] border border-white/5 hover:bg-[#2a2a2a] hover:border-white/20 text-gray-300 hover:text-white transition-all text-[13px] font-medium shadow-sm hover:shadow-md"
+                                    >
+                                        <query.icon size={15} className="text-gray-400" />
+                                        {query.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {messages.length > 0 && (
+                            <div className="text-center mt-3 text-xs text-gray-500 font-medium tracking-wide">
+                                Shadow AI can make mistakes. Consider checking important information.
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

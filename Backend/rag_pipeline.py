@@ -9,6 +9,8 @@ from langchain_community.vectorstores import Chroma
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from google import genai
+from google.genai import types
 
 # =========================================================
 # LOAD ENV
@@ -127,8 +129,7 @@ Rules:
 1. If the question is about your identity, capabilities, or what you can help with,
    answer directly without using the context.
 2. For all university-related queries, answer ONLY using the provided context.
-3. If the university-related answer is NOT present in the context, respond exactly with:
-"Sorry, I don’t know based on the given context."
+3. CRITICAL RULE: If the exact answer or specific details relevant to the university query are NOT present in the Context block below, you MUST respond exactly with the phrase: "Sorry, I don't know based on the given context." Do not provide any other information or guesses. Do not provide a partial answer.
 4. Keep answers clear, simple, and student-friendly.
 5. Provide steps in bullet points when applicable.
 6. Do NOT add assumptions or external information.
@@ -155,25 +156,121 @@ llm = ChatOpenAI(
 )
 
 # =========================================================
+# SECONDARY RAG / FALLBACK
+# =========================================================
+
+def is_university_relevant(question: str) -> bool:
+    relevance_prompt = PromptTemplate(
+        input_variables=["question"],
+        template="""
+Determine if the following question is related to a university, campus, college, or general student life.
+Respond with exactly YES or NO.
+
+Question: {question}
+"""
+    )
+    chain = relevance_prompt | llm | StrOutputParser()
+    try:
+        result = chain.invoke({"question": question})
+        return "YES" in result.strip().upper()
+    except Exception:
+        return False
+
+def gemini_search_fallback(question: str) -> str:
+    try:
+        client = genai.Client(
+            api_key=os.environ.get("GEMINI_API_KEY"),
+        )
+
+        model = "gemini-3.1-flash-lite-preview"
+        contents = [
+            types.Content(
+                role="user",
+                parts=[
+                    types.Part.from_text(text=question),
+                ],
+            ),
+        ]
+        tools = [
+            types.Tool(googleSearch=types.GoogleSearch()),
+        ]
+        generate_content_config = types.GenerateContentConfig(
+            thinking_config=types.ThinkingConfig(
+                thinking_level="HIGH",
+            ),
+            tools=tools,
+        )
+
+        # Using generate_content instead of generate_content_stream to return a full string synchronously
+        response = client.models.generate_content(
+            model=model,
+            contents=contents,
+            config=generate_content_config,
+        )
+        
+        answer_text = response.text
+        
+        # Extract grounding sources
+        sources = []
+        if hasattr(response, 'candidates') and response.candidates:
+            candidate = response.candidates[0]
+            if hasattr(candidate, 'grounding_metadata') and candidate.grounding_metadata:
+                meta = candidate.grounding_metadata
+                if hasattr(meta, 'grounding_chunks') and meta.grounding_chunks:
+                    for chunk in meta.grounding_chunks:
+                        if hasattr(chunk, 'web') and chunk.web:
+                            title = getattr(chunk.web, 'title', 'Source')
+                            uri = getattr(chunk.web, 'uri', '')
+                            if uri:
+                                # Deduplicate sources (sometimes the same URI appears multiple times)
+                                source_md = f"- [{title}]({uri})"
+                                if source_md not in sources:
+                                    sources.append(source_md)
+        
+        if sources:
+            sources_text = "\n\n**Sources:**\n" + "\n".join(sources)
+            answer_text += sources_text
+            
+        return answer_text
+    except Exception as e:
+        return f"Sorry, I couldn't find an answer. (Error: {str(e)})"
+
+# =========================================================
 # RAG FUNCTION
 # =========================================================
 
 def rag_answer(question: str) -> str:
-    
-
     context = retrieve_context(question)
 
     if context is None:
-        return "I don’t know based on the given context."
+        answer = "I don’t know based on the given context."
+    else:
+        chain = (
+            {
+                "context": lambda _: context,
+                "question": RunnablePassthrough(),
+            }
+            | prompt
+            | llm
+            | StrOutputParser()
+        )
+        answer = chain.invoke(question)
 
-    chain = (
-        {
-            "context": lambda _: context,
-            "question": RunnablePassthrough(),
-        }
-        | prompt
-        | llm
-        | StrOutputParser()
-    )
+    fallback_triggers = [
+        "don't know based on the given context",
+        "don’t know based on the given context",
+        "do not know based on the given context",
+        "don't know based on the context",
+        "don’t know based on the context",
+        "don't know" # catch shorter versions of the LLM defying prompt rules
+    ]
+    
+    answer_lower = answer.lower()
+    
+    # If the response indicates lack of context knowledge, completely override it with the fallback
+    if any(trigger in answer_lower for trigger in fallback_triggers):
+        if is_university_relevant(question):
+            extended_query = f"{question} in vit vellore"
+            return gemini_search_fallback(extended_query)
 
-    return chain.invoke(question)
+    return answer
