@@ -12,3 +12,4 @@ python-jose[cryptography]
 python-multipart
 pypdf
 bcrypt<4.1.0
+google-genai
