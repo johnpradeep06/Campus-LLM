@@ -6,6 +6,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useRouter } from "next/navigation";
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -38,6 +39,7 @@ export default function ChatInterface() {
     const [sessions, setSessions] = useState<ChatSession[]>([]);
     const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const router = useRouter();
 
     useEffect(() => {
         if (window.innerWidth < 768) {
@@ -56,10 +58,19 @@ export default function ChatInterface() {
     const fetchSessions = async () => {
         try {
             const token = localStorage.getItem('token');
-            if (!token) return;
+            if (!token) {
+                router.push('/login');
+                return;
+            }
             const res = await fetch('https://campus-llm-production.up.railway.app/sessions', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            if (res.status === 401) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('role');
+                router.push('/login');
+                return;
+            }
             if (res.ok) {
                 const data = await res.json();
                 setSessions(data);
@@ -77,6 +88,12 @@ export default function ChatInterface() {
             const res = await fetch(`https://campus-llm-production.up.railway.app/sessions/${sessionId}/messages`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            if (res.status === 401) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('role');
+                router.push('/login');
+                return;
+            }
             if (res.ok) {
                 const data = await res.json();
                 setMessages(data.map((m: any) => ({ role: m.role, content: m.content })));
@@ -114,6 +131,12 @@ export default function ChatInterface() {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                if (createRes.status === 401) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('role');
+                    router.push('/login');
+                    return;
+                }
                 if (createRes.ok) {
                     const newSession = await createRes.json();
                     activeSessionId = newSession.id;
@@ -131,6 +154,13 @@ export default function ChatInterface() {
                 },
                 body: JSON.stringify({ question: userMessage, session_id: activeSessionId })
             });
+
+            if (askRes.status === 401) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('role');
+                router.push('/login');
+                return;
+            }
 
             if (!askRes.ok) throw new Error("Failed to get answer");
 
@@ -212,14 +242,14 @@ export default function ChatInterface() {
                             <Globe size={13} className="text-gray-400" />
                             Sources
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                             {sources.map((src, i) => (
                                 <a
                                     key={i}
                                     href={src.uri}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="group flex flex-col justify-center bg-[#1c1c1c] hover:bg-[#2a2a2a] border border-white/10 hover:border-white/20 rounded-xl px-3 py-2.5 transition-all text-left max-w-[180px] shadow-sm"
+                                    className="group flex flex-col justify-center bg-[#1c1c1c] hover:bg-[#2a2a2a] border border-white/10 hover:border-white/20 rounded-xl px-2.5 py-2.5 transition-all text-left w-full shadow-sm overflow-hidden"
                                 >
                                     <div className="flex items-center gap-2 mb-1 text-xs">
                                         <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[9px] text-gray-300 font-medium shrink-0 group-hover:bg-white/20 transition-colors">
@@ -312,10 +342,10 @@ export default function ChatInterface() {
             {/* Main Content */}
             <div className="flex-1 flex flex-col h-full relative w-full overflow-hidden">
                 {/* Header */}
-                <div className="sticky top-0 z-10 flex items-center p-3 text-gray-200">
+                <div className="sticky top-0 z-50 flex items-center p-3 text-gray-200 pointer-events-none">
                     <button
                         onClick={() => setSidebarOpen(!sidebarOpen)}
-                        className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
+                        className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors pointer-events-auto"
                         title="Toggle Sidebar"
                     >
                         <Menu size={20} />

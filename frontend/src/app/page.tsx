@@ -34,7 +34,7 @@ export default function Home() {
     return (
         <main className="h-[100dvh] w-full bg-[#212121] flex flex-col relative overflow-hidden">
             {/* Top Right Controls */}
-            <div className="absolute top-4 right-4 z-20 flex items-center gap-3">
+            <div className="absolute top-4 right-4 z-50 flex items-center gap-3">
                 {role === 'admin' && (
                     <button
                         onClick={() => router.push('/admin')}

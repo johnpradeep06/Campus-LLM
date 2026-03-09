@@ -48,7 +48,7 @@ export default function AdminPage() {
     if (loading) return <div className="min-h-[100dvh] bg-[#121212] text-white flex items-center justify-center">Loading Admin...</div>;
 
     return (
-        <main className="min-h-[100dvh] overflow-y-auto w-full bg-[#121212] flex flex-col items-center custom-scrollbar">
+        <main className="h-[100dvh] overflow-y-auto w-full bg-[#121212] flex flex-col items-center custom-scrollbar">
             {/* Navigation Bar */}
             <div className="w-full bg-[#1a1a1a] border-b border-white/5 p-4 flex items-center justify-between sticky top-0 z-50 shadow-md">
                 <div className="flex items-center gap-4 px-2 md:px-6">
@@ -67,7 +67,7 @@ export default function AdminPage() {
             </div>
 
             {/* Dashboard Content */}
-            <div className="w-full max-w-5xl p-6 md:p-10 flex flex-col gap-8 mt-4">
+            <div className="w-full max-w-5xl p-6 md:p-10 flex flex-col gap-8 flex-1">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Knowledge Base</h1>
@@ -75,12 +75,12 @@ export default function AdminPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
                     {/* Main Upload Box */}
                     <div className="lg:col-span-2 flex flex-col gap-6">
                         <UploadComponent onUploadSuccess={fetchFiles} />
 
-                        <div className="bg-[#1e1e1e] border border-white/5 rounded-2xl p-6 shadow-xl flex-1">
+                        <div className="bg-[#1e1e1e] border border-white/5 rounded-2xl p-6 shadow-xl flex-1 flex flex-col min-h-[300px]">
                             <h3 className="font-medium text-white flex items-center gap-2 mb-4">
                                 <FileText size={18} className="text-purple-400" />
                                 Uploaded Documents
@@ -88,7 +88,7 @@ export default function AdminPage() {
                             {files.length === 0 ? (
                                 <div className="text-center py-8 text-gray-500 text-sm">No documents found. Upload one to start tracking.</div>
                             ) : (
-                                <div className="flex flex-col gap-3 overflow-y-auto max-h-[400px] custom-scrollbar pr-2">
+                                <div className="flex flex-col gap-3 overflow-y-auto flex-1 custom-scrollbar pr-2 min-h-0">
                                     {files.map((f, idx) => (
                                         <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
                                             <div className="flex items-center gap-3 overflow-hidden">
