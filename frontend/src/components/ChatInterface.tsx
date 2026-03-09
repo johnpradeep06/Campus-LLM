@@ -23,11 +23,11 @@ type ChatSession = {
 };
 
 const SUGGESTED_QUERIES = [
-    { text: "What is the hostel fee structure?", icon: Building, label: "Hostel fees" },
+    { text: "What is the hostel fee structure for 2026?", icon: Building, label: "Hostel fees" },
     { text: "When does the next semester begin?", icon: Calendar, label: "Academic calendar" },
-    { text: "How do I register for courses?", icon: GraduationCap, label: "Course registration" },
-    { text: "What are the library timings?", icon: BookOpen, label: "Library hours" },
-    { text: "What is the placement record?", icon: Briefcase, label: "Placements" },
+    { text: "What is the S grade policy", icon: GraduationCap, label: "Grades" },
+    { text: "what happens if i caught for malpractice during CAT exams", icon: BookOpen, label: "Malpractice" },
+    { text: "Do we have placement training during weekend in final year", icon: Briefcase, label: "Placements" },
 ];
 
 export default function ChatInterface() {
