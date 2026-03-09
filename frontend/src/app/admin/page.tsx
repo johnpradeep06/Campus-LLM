@@ -19,7 +19,7 @@ export default function AdminPage() {
     const fetchFiles = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:8000/files', {
+            const res = await fetch('https://campus-llm-production.up.railway.app/files', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {

@@ -7,7 +7,7 @@ export async function askRag(question: string) {
   }
 
   const res = await fetch(
-    `http://localhost:8000/ask`,
+    `https://campus-llm-production.up.railway.app/ask`,
     {
       method: "POST",
       headers: headers,
