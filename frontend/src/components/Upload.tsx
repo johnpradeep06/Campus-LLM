@@ -56,7 +56,7 @@ export default function UploadComponent({ onUploadSuccess }: UploadProps = {}) {
         const token = localStorage.getItem('token');
 
         try {
-            const res = await fetch('https://campus-llm-production.up.railway.app/upload', {
+            const res = await fetch('http://localhost:8000/upload', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

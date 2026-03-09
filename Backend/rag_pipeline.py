@@ -1,5 +1,7 @@
 import os
 import bs4
+import requests
+import json
 from dotenv import load_dotenv
 
 from langchain_core.prompts import PromptTemplate
@@ -176,62 +178,59 @@ Question: {question}
     except Exception:
         return False
 
-def gemini_search_fallback(question: str) -> str:
+def openrouter_search_fallback(question: str) -> str:
     try:
-        client = genai.Client(
-            api_key=os.environ.get("GEMINI_API_KEY"),
-        )
+        api_key = os.environ.get("SEARCH_API")
+        if not api_key:
+            return "Sorry, SEARCH_API key is missing in environment."
 
-        model = "gemini-3.1-flash-lite-preview"
-        contents = [
-            types.Content(
-                role="user",
-                parts=[
-                    types.Part.from_text(text=question),
-                ],
-            ),
-        ]
-        tools = [
-            types.Tool(googleSearch=types.GoogleSearch()),
-        ]
-        generate_content_config = types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig(
-                thinking_level="HIGH",
-            ),
-            tools=tools,
+        response = requests.post(
+            url="https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+            },
+            data=json.dumps({
+                "model": "openai/gpt-4o-mini-search-preview",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": question
+                    }
+                ]
+            })
         )
-
-        # Using generate_content instead of generate_content_stream to return a full string synchronously
-        response = client.models.generate_content(
-            model=model,
-            contents=contents,
-            config=generate_content_config,
-        )
+        response.raise_for_status()
+        data = response.json()
         
-        answer_text = response.text
+        print(f"OpenRouter API Response:\n{json.dumps(data, indent=2)}")
         
-        # Extract grounding sources
-        sources = []
-        if hasattr(response, 'candidates') and response.candidates:
-            candidate = response.candidates[0]
-            if hasattr(candidate, 'grounding_metadata') and candidate.grounding_metadata:
-                meta = candidate.grounding_metadata
-                if hasattr(meta, 'grounding_chunks') and meta.grounding_chunks:
-                    for chunk in meta.grounding_chunks:
-                        if hasattr(chunk, 'web') and chunk.web:
-                            title = getattr(chunk.web, 'title', 'Source')
-                            uri = getattr(chunk.web, 'uri', '')
-                            if uri:
-                                # Deduplicate sources (sometimes the same URI appears multiple times)
-                                source_md = f"- [{title}]({uri})"
-                                if source_md not in sources:
-                                    sources.append(source_md)
-        
-        if sources:
-            sources_text = "\n\n**Sources:**\n" + "\n".join(sources)
-            answer_text += sources_text
+        if "choices" in data and len(data["choices"]) > 0:
+            message = data["choices"][0]["message"]
+            answer_text = message.get("content", "")
             
-        return answer_text
+            # Extract grounding sources
+            sources = []
+            annotations = message.get("annotations", [])
+            if annotations:
+                for annotation in annotations:
+                    if annotation.get("type") == "url_citation":
+                        url_citation = annotation.get("url_citation", {})
+                        url = url_citation.get("url", "")
+                        title = url_citation.get("title", "Source")
+                        
+                        if url:
+                            # Deduplicate sources based on the exact markdown
+                            source_md = f"- [{title}]({url})"
+                            if source_md not in sources:
+                                sources.append(source_md)
+            
+            if sources:
+                sources_text = "\n\n**Sources:**\n" + "\n".join(sources)
+                answer_text += sources_text
+                
+            return answer_text
+        else:
+            return "Sorry, I couldn't find an answer from the fallback search."
     except Exception as e:
         return f"Sorry, I couldn't find an answer. (Error: {str(e)})"
 
@@ -271,6 +270,6 @@ def rag_answer(question: str) -> str:
     if any(trigger in answer_lower for trigger in fallback_triggers):
         if is_university_relevant(question):
             extended_query = f"{question} in vit vellore"
-            return gemini_search_fallback(extended_query)
+            return openrouter_search_fallback(extended_query)
 
     return answer
