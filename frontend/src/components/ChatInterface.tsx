@@ -94,7 +94,7 @@ export default function ChatInterface() {
                 router.push('/login');
                 return;
             }
-            const res = await fetch('http://localhost:8000/sessions', {
+            const res = await fetch('https://campus-llm-production.up.railway.app/sessions', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.status === 401) {
@@ -117,7 +117,7 @@ export default function ChatInterface() {
         setIsLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`http://localhost:8000/sessions/${sessionId}/messages`, {
+            const res = await fetch(`https://campus-llm-production.up.railway.app/sessions/${sessionId}/messages`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.status === 401) {
@@ -159,7 +159,7 @@ export default function ChatInterface() {
             let activeSessionId = currentSessionId;
 
             if (!activeSessionId) {
-                const createRes = await fetch('http://localhost:8000/sessions', {
+                const createRes = await fetch('https://campus-llm-production.up.railway.app/sessions', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -178,7 +178,7 @@ export default function ChatInterface() {
                 }
             }
 
-            const askRes = await fetch(`http://localhost:8000/sessions/${activeSessionId}/ask`, {
+            const askRes = await fetch(`https://campus-llm-production.up.railway.app/sessions/${activeSessionId}/ask`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

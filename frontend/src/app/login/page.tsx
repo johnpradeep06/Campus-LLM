@@ -21,7 +21,7 @@ export default function LoginPage() {
         formData.append('password', password);
 
         try {
-            const res = await fetch('http://localhost:8000/token', {
+            const res = await fetch('https://campus-llm-production.up.railway.app/token', {
                 method: 'POST',
                 body: formData,
             });
@@ -34,7 +34,7 @@ export default function LoginPage() {
             localStorage.setItem('token', data.access_token);
 
             // Fetch user role
-            const userRes = await fetch('http://localhost:8000/users/me', {
+            const userRes = await fetch('https://campus-llm-production.up.railway.app/users/me', {
                 headers: {
                     'Authorization': `Bearer ${data.access_token}`
                 }
