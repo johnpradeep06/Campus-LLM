@@ -31,6 +31,13 @@ const SUGGESTED_QUERIES = [
     { text: "Do we have placement training during weekend in final year", icon: Briefcase, label: "Placements" },
 ];
 
+const PLACEHOLDERS = [
+    "Ask anything...",
+    "When does campus placement start?",
+    "What is the average package for CSE?",
+    "Library open hours?"
+];
+
 export default function ChatInterface() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
@@ -40,6 +47,31 @@ export default function ChatInterface() {
     const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
+
+    const [currentPlaceholder, setCurrentPlaceholder] = useState("");
+    const [placeholderIndex, setPlaceholderIndex] = useState(0);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    useEffect(() => {
+        const timeoutContext = setTimeout(() => {
+            const fullText = PLACEHOLDERS[placeholderIndex];
+
+            if (!isDeleting) {
+                setCurrentPlaceholder(fullText.substring(0, currentPlaceholder.length + 1));
+                if (currentPlaceholder.length === fullText.length) {
+                    setTimeout(() => setIsDeleting(true), 1500);
+                }
+            } else {
+                setCurrentPlaceholder(fullText.substring(0, currentPlaceholder.length - 1));
+                if (currentPlaceholder.length === 0) {
+                    setIsDeleting(false);
+                    setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDERS.length);
+                }
+            }
+        }, isDeleting ? 30 : 50);
+
+        return () => clearTimeout(timeoutContext);
+    }, [currentPlaceholder, isDeleting, placeholderIndex]);
 
     useEffect(() => {
         if (window.innerWidth < 768) {
@@ -62,7 +94,7 @@ export default function ChatInterface() {
                 router.push('/login');
                 return;
             }
-            const res = await fetch('https://campus-llm-production.up.railway.app/sessions', {
+            const res = await fetch('http://localhost:8000/sessions', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.status === 401) {
@@ -85,7 +117,7 @@ export default function ChatInterface() {
         setIsLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`https://campus-llm-production.up.railway.app/sessions/${sessionId}/messages`, {
+            const res = await fetch(`http://localhost:8000/sessions/${sessionId}/messages`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.status === 401) {
@@ -127,7 +159,7 @@ export default function ChatInterface() {
             let activeSessionId = currentSessionId;
 
             if (!activeSessionId) {
-                const createRes = await fetch('https://campus-llm-production.up.railway.app/sessions', {
+                const createRes = await fetch('http://localhost:8000/sessions', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -146,7 +178,7 @@ export default function ChatInterface() {
                 }
             }
 
-            const askRes = await fetch(`https://campus-llm-production.up.railway.app/sessions/${activeSessionId}/ask`, {
+            const askRes = await fetch(`http://localhost:8000/sessions/${activeSessionId}/ask`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -379,8 +411,20 @@ export default function ChatInterface() {
                                         <div className="w-8 h-8 md:w-9 md:h-9 bg-white rounded-full flex items-center justify-center text-[#212121] flex-shrink-0 mt-1 shadow-sm border border-white/10">
                                             <Bot size={18} />
                                         </div>
-                                        <div className="flex items-center mt-2.5 md:mt-3">
-                                            <Loader2 size={18} className="animate-spin text-gray-400" />
+                                        <div className="flex flex-col gap-3 w-full max-w-2xl mt-1.5">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-gray-300 font-medium text-[15px] animate-pulse">Searching sources</span>
+                                                <div className="flex -space-x-2">
+                                                    <div className="w-6 h-6 rounded-full bg-blue-500/20 border border-blue-500/50 flex items-center justify-center animate-bounce shadow-sm z-30" style={{ animationDelay: '0ms' }}><Globe size={11} className="text-blue-400" /></div>
+                                                    <div className="w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center animate-bounce shadow-sm z-20" style={{ animationDelay: '150ms' }}><BookOpen size={11} className="text-emerald-400" /></div>
+                                                    <div className="w-6 h-6 rounded-full bg-purple-500/20 border border-purple-500/50 flex items-center justify-center animate-bounce shadow-sm z-10" style={{ animationDelay: '300ms' }}><GraduationCap size={11} className="text-purple-400" /></div>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2.5 mt-2">
+                                                <div className="h-4 bg-white/5 rounded-md w-full animate-pulse"></div>
+                                                <div className="h-4 bg-white/5 rounded-md w-5/6 animate-pulse"></div>
+                                                <div className="h-4 bg-white/5 rounded-md w-4/6 animate-pulse"></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -402,38 +446,54 @@ export default function ChatInterface() {
                             </h2>
                         )}
 
-                        <div className="relative flex flex-col w-full bg-[#2a2a2a] rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.3)] focus-within:border-white/20 focus-within:bg-[#2f2f2f] transition-all duration-300">
-                            <textarea
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleSubmit();
-                                    }
-                                }}
-                                placeholder="Ask anything..."
-                                className="w-full bg-transparent text-white placeholder-gray-400 resize-none focus:outline-none min-h-[56px] py-4 px-5 text-[15px] custom-scrollbar"
-                                style={{ height: 'auto', minHeight: '56px' }}
-                                rows={1}
+                        <style>{`
+                            @keyframes spin-slow {
+                                from { transform: translate(-50%, -50%) rotate(0deg); }
+                                to { transform: translate(-50%, -50%) rotate(360deg); }
+                            }
+                        `}</style>
+                        <div className="relative w-full rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.3)] group overflow-hidden">
+                            <div
+                                className={cn(
+                                    "absolute top-1/2 left-1/2 w-[200%] h-[200%] bg-[conic-gradient(from_0deg,transparent_40%,rgba(255,255,255,1)_100%)] rounded-full z-0 pointer-events-none transition-opacity duration-500",
+                                    isLoading ? "opacity-100" : "opacity-0"
+                                )}
+                                style={{ animation: 'spin-slow 3s linear infinite' }}
                             />
-                            <div className="flex items-center justify-between px-3 pb-3">
-                                <div className="flex items-center gap-2">
-                                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-gray-200 transition-colors text-xs font-medium">
-                                        <Bot size={14} />
-                                        Model
+
+                            <div className="relative flex flex-col w-[calc(100%-4px)] bg-[#2a2a2a] group-focus-within:bg-[#2f2f2f] rounded-[14px] m-[1px] transition-colors duration-300 z-10">
+                                <textarea
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleSubmit();
+                                        }
+                                    }}
+                                    placeholder={currentPlaceholder + (isDeleting ? "" : "|")}
+                                    className="w-full bg-transparent text-white placeholder-gray-400 resize-none focus:outline-none min-h-[56px] py-4 px-5 text-[15px] custom-scrollbar"
+                                    style={{ height: 'auto', minHeight: '56px' }}
+                                    rows={1}
+                                />
+                                <div className="flex items-center justify-between px-3 pb-3">
+                                    <div className="flex items-center gap-2">
+                                        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-gray-200 transition-colors text-xs font-medium">
+                                            <Bot size={14} />
+                                            Model
+                                        </button>
+                                    </div>
+                                    <button
+                                        onClick={() => handleSubmit()}
+                                        disabled={!input.trim() || isLoading}
+                                        className={cn(
+                                            "p-2 rounded-full transition-all flex items-center justify-center w-8 h-8 outline-none",
+                                            input.trim() && !isLoading ? "bg-white text-black shadow-md hover:scale-105" : "bg-white/5 text-gray-500 cursor-not-allowed"
+                                        )}
+                                    >
+                                        {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={15} className="ml-0.5" />}
                                     </button>
                                 </div>
-                                <button
-                                    onClick={() => handleSubmit()}
-                                    disabled={!input.trim() || isLoading}
-                                    className={cn(
-                                        "p-2 rounded-full transition-all flex items-center justify-center w-8 h-8 outline-none",
-                                        input.trim() && !isLoading ? "bg-white text-black shadow-md hover:scale-105" : "bg-white/5 text-gray-500 cursor-not-allowed"
-                                    )}
-                                >
-                                    {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={15} className="ml-0.5" />}
-                                </button>
                             </div>
                         </div>
 

@@ -196,6 +196,11 @@ def exa_search_fallback(question: str) -> str:
                 sources.append(f"- [{title}]({url})")
                 seen_urls.add(url)
                 
+        # Remove the citation blocks e.g., ([Title](url), [Title](url))
+        answer_text = re.sub(r'\s*\((?:\[[^\]]+\]\((?:https?://[^\)]+)\)(?:,\s*)?)+\)', '', answer_text)
+        # Also remove any remaining bare inline links like [Title](url) -> Title
+        answer_text = re.sub(r'\[([^\]]+)\]\((https?://[^\)]+)\)', r'\1', answer_text)
+        
         if sources:
             sources_text = "\n\n**Sources:**\n" + "\n".join(sources)
             answer_text += sources_text
