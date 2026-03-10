@@ -1,15 +1,7 @@
-from tavily import TavilyClient
-import json
-
-client = TavilyClient("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")
-
-response = client.search(
-    query="will i get a 4 bed ac in T block with 692 rank in vit vellore ",
-    include_answer="advanced",
-    search_depth="advanced"
-)
-
-print(json.dumps(response, indent=2))
+from exa_py import Exa
+exa =  Exa(api_key="d7c0235f-7fb2-4edf-94b2-e711c4649507")
+response = exa.answer("Can a guest visit vit again to give a guest lecture?")
+print(response.answer)
 
 ''' import os
 import bs4

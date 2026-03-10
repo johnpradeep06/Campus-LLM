@@ -3,6 +3,8 @@ import bs4
 import requests
 import json
 from dotenv import load_dotenv
+from exa_py import Exa
+
 
 from langchain_core.prompts import PromptTemplate
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -19,7 +21,7 @@ from google.genai import types
 # =========================================================
 
 load_dotenv()
-
+exa = Exa(api_key=os.environ.get("EXA_API_KEY"))
 # =========================================================
 # LANGSMITH CONFIG
 # =========================================================
@@ -178,59 +180,27 @@ Question: {question}
     except Exception:
         return False
 
-def openrouter_search_fallback(question: str) -> str:
+def exa_search_fallback(question: str) -> str:
+    import re
     try:
-        api_key = os.environ.get("SEARCH_API")
-        if not api_key:
-            return "Sorry, SEARCH_API key is missing in environment."
-
-        response = requests.post(
-            url="https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-            },
-            data=json.dumps({
-                "model": "openai/gpt-4o-mini-search-preview",
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": question
-                    }
-                ]
-            })
-        )
-        response.raise_for_status()
-        data = response.json()
+        response = exa.answer(question)
+        answer_text = response.answer
         
-        print(f"OpenRouter API Response:\n{json.dumps(data, indent=2)}")
+        # Extract markdown links from Exa's response
+        links = re.findall(r'\[([^\]]+)\]\((https?://[^\)]+)\)', answer_text)
         
-        if "choices" in data and len(data["choices"]) > 0:
-            message = data["choices"][0]["message"]
-            answer_text = message.get("content", "")
-            
-            # Extract grounding sources
-            sources = []
-            annotations = message.get("annotations", [])
-            if annotations:
-                for annotation in annotations:
-                    if annotation.get("type") == "url_citation":
-                        url_citation = annotation.get("url_citation", {})
-                        url = url_citation.get("url", "")
-                        title = url_citation.get("title", "Source")
-                        
-                        if url:
-                            # Deduplicate sources based on the exact markdown
-                            source_md = f"- [{title}]({url})"
-                            if source_md not in sources:
-                                sources.append(source_md)
-            
-            if sources:
-                sources_text = "\n\n**Sources:**\n" + "\n".join(sources)
-                answer_text += sources_text
+        sources = []
+        seen_urls = set()
+        for title, url in links:
+            if url not in seen_urls:
+                sources.append(f"- [{title}]({url})")
+                seen_urls.add(url)
                 
-            return answer_text
-        else:
-            return "Sorry, I couldn't find an answer from the fallback search."
+        if sources:
+            sources_text = "\n\n**Sources:**\n" + "\n".join(sources)
+            answer_text += sources_text
+            
+        return answer_text
     except Exception as e:
         return f"Sorry, I couldn't find an answer. (Error: {str(e)})"
 
@@ -270,6 +240,6 @@ def rag_answer(question: str) -> str:
     if any(trigger in answer_lower for trigger in fallback_triggers):
         if is_university_relevant(question):
             extended_query = f"{question} in vit vellore"
-            return openrouter_search_fallback(extended_query)
+            return exa_search_fallback(extended_query)
 
     return answer
