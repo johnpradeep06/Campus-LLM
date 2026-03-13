@@ -7,7 +7,6 @@ import { Bot, Loader2, UserPlus } from 'lucide-react';
 export default function RegisterPage() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [role, setRole] = useState('student');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
@@ -23,7 +22,7 @@ export default function RegisterPage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username, password, role }),
+                body: JSON.stringify({ username, password, role: 'student' }),
             });
 
             if (!res.ok) {
@@ -84,24 +83,7 @@ export default function RegisterPage() {
                                 required
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">Role</label>
-                            <div className="relative">
-                                <select
-                                    value={role}
-                                    onChange={(e) => setRole(e.target.value)}
-                                    className="w-full p-4 bg-[#1e1e1e] border border-white/10 rounded-xl text-white appearance-none focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/30 transition-all shadow-inner text-[15px] cursor-pointer"
-                                >
-                                    <option value="student">Student</option>
-                                    <option value="admin">Admin</option>
-                                </select>
-                                <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                                    <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
+
                     </div>
 
                     <div className="pt-2">
