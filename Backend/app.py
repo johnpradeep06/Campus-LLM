@@ -83,11 +83,27 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     new_user = User(
         username=user.username,
         hashed_password=hashed_password,
-        role=user.role
+        role="student"  # Force student role regardless of input
     )
     db.add(new_user)
     db.commit()
     return {"message": "User created successfully"}
+
+@app.post("/register_admin", status_code=status.HTTP_201_CREATED)
+def register_admin(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.username == user.username).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+    
+    hashed_password = get_password_hash(user.password)
+    new_user = User(
+        username=user.username,
+        hashed_password=hashed_password,
+        role="admin"  # Force admin role
+    )
+    db.add(new_user)
+    db.commit()
+    return {"message": "Admin user created successfully"}
 
 @app.post("/token", response_model=Token)
 def login_for_access_token(
