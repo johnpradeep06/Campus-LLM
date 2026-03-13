@@ -125,14 +125,6 @@ export default function LoginPage() {
                     </p>
                 </div>
 
-                <div className="text-center mt-6">
-                    <p className="text-sm text-gray-500">
-                        Admin?{' '}
-                        <a href="/campus_admin/login" className="text-gray-400 hover:text-white underline underline-offset-4 decoration-white/20 hover:decoration-white/60 font-medium transition-all">
-                            Admin Login
-                        </a>
-                    </p>
-                </div>
             </div>
         </div>
     );

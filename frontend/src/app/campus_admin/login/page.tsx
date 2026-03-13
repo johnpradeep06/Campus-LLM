@@ -120,12 +120,6 @@ export default function AdminLoginPage() {
 
                 <div className="text-center mt-10 border-t border-white/5 pt-6 space-y-3">
                     <p className="text-sm text-gray-500">
-                        New Administrator?{' '}
-                        <a href="/ca_admin/reg" className="text-gray-400 hover:text-white underline underline-offset-4 decoration-white/20 hover:decoration-white/60 font-medium transition-all">
-                            Register Here
-                        </a>
-                    </p>
-                    <p className="text-sm text-gray-500">
                         Not an admin?{' '}
                         <a href="/login" className="text-gray-400 hover:text-white underline underline-offset-4 decoration-white/20 hover:decoration-white/60 font-medium transition-all">
                             Back to Student Login
